@@ -1,0 +1,176 @@
+{
+  "name": "AI Stock Recommendation Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "fda94953-691c-43a1-b0da-0b5fdef68875",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "69039124-08b5-4f65-b61f-ab1370dc4393"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": " You are an AI Stock Portfolio Analysis Agent.\n\nFirst, use the Google Sheets tool to read the user's current portfolio.\n\nIdentify the stocks and sectors already owned.\n\nThen identify potential stocks that could improve diversification.\n\nDo not recommend a stock that the user already owns.\n\nUse the Marketstack tool to obtain actual market data for stocks you are considering.\n\nNever invent stock prices or market data.\n\nChoose one stock and explain why it could be considered.\n\nInclude:\n- Stock\n- Ticker\n- Recent price\n- Reason for recommendation\n- Diversification benefit\n- Key risks\n- Confidence level\n\nThis is informational analysis and not guaranteed financial advice.assistant"
+        }
+      },
+      "id": "14465413-4247-44a9-82c7-15aa07e710fb",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "toolDescription": "Use this tool to retrieve market data for a stock ticker.\n\nInput:\nA stock ticker symbol such as AAPL, MSFT, NVDA, etc.\n\nReturns:\nRecent end-of-day stock market data including open, high, low,\nclose, adjusted close, volume, symbol and exchange.\n\nUse this tool whenever you need actual market data.\nNever invent stock prices.",
+        "url": "https://api.marketstack.com/v2/eod/latest",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_key",
+              "value": "Marketstack_API_KEY"
+            },
+            {
+              "name": "symbols",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters1_Value', `The stock ticker symbol to retrieve market data for.\nExample: AAPL, MSFT, NVDA.\nUse the appropriate ticker symbol for the stock being analyzed.`, 'string') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9fe9e025-824f-41e4-896d-d6c6be5f847b",
+      "name": "Marketstack Stock Data",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.5,
+      "position": [
+        384,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Use this tool to read the user's current stock portfolio.\n\nThe Portfolio sheet contains:\n- Symbol\n- Company\n- Quantity\n- BuyPrice\n- Sector\n\nAlways use this tool before recommending a new stock so that you know which stocks and sectors the user already owns.\n\nDo not recommend a stock that is already in the portfolio.",
+        "documentId": {
+          "__rl": true,
+          "value": "1rJJ7b5b3yH515d9d56gujU8498zdSe7Y0i2lEz1eV30",
+          "mode": "list",
+          "cachedResultName": "Stock Agent Portfolio",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rJJ7b5b3yH515d9d56gujU8498zdSe7Y0i2lEz1eV30/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gid=0",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rJJ7b5b3yH515d9d56gujU8498zdSe7Y0i2lEz1eV30/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "228a5e5a-e262-4e75-9ab8-20701232bc75",
+      "name": "Stock Agent Portfolio",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        480,
+        304
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "oTUFCuumsbRZW6n1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        96,
+        208
+      ],
+      "id": "e5e36c68-e65d-49bc-a250-373428523182",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "SePNnc4dGsMfuOo3",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marketstack Stock Data": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stock Agent Portfolio": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "d8ae416e-c9fd-4c1d-ba5a-3449e3618eec",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2d3a7b2ea87ee39b2ccf12cd0cd3a56fe5d3d50fcd017ed2c12ed2dc34c3e81a"
+  },
+  "nodeGroups": [],
+  "id": "dm3m36haqkJgBLEb",
+  "tags": []
+}
